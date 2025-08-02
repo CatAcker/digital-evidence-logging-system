@@ -1,0 +1,1 @@
+def main(field a, field b) -> field { return a * b; }
