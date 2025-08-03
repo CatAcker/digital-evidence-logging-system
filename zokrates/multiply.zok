@@ -1,1 +1,5 @@
-def main(field a, field b) -> field { return a * b; }
+def main(private field secret, private field commitment) -> field {
+    field computed = secret * 12345;
+    assert(computed == commitment);
+    return commitment;
+}

@@ -1,13 +1,13 @@
 {
   "inputs": [
     {
-      "name": "a",
-      "public": true,
+      "name": "secret",
+      "public": false,
       "type": "field"
     },
     {
-      "name": "b",
-      "public": true,
+      "name": "commitment",
+      "public": false,
       "type": "field"
     }
   ],

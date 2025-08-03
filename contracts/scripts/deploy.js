@@ -1,10 +1,12 @@
 const hre = require("hardhat");
 
 async function main() {
-  const Evidence = await hre.ethers.getContractFactory("EvidenceRegistry");
-  const evidence = await Evidence.deploy(); // This already deploys it!
+  const EvidenceRegistry = await hre.ethers.getContractFactory("EvidenceRegistry");
+  const contract = await EvidenceRegistry.deploy();
 
-  console.log(`Contract deployed to: ${evidence.target}`); // Use .target instead of .address
+  await contract.waitForDeployment(); // ✅ this replaces contract.deployed()
+
+  console.log("EvidenceRegistry deployed to:", await contract.getAddress()); // ✅ getAddress() instead of contract.address
 }
 
 main().catch((error) => {

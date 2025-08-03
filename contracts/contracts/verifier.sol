@@ -4,10 +4,7 @@
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-
 library Pairing {
     struct G1Point {
         uint X;
@@ -161,35 +158,44 @@ contract Verifier {
         Pairing.G1Point c;
     }
     function verifyingKey() pure internal returns (VerifyingKey memory vk) {
-        vk.alpha = Pairing.G1Point(uint256(0x059b0271c65510016fc5188125caef711cde4e09397b03aace4aaf6443aede7b), uint256(0x174ee92b20247aee4b03d2e632f5286193a775144bb96965599c899d56b8600d));
-        vk.beta = Pairing.G2Point([uint256(0x12bf0e27547775ccb6b96e88a45c6e78ba4afb37bb22fbe0a71ef3625c67dbed), uint256(0x14a95af925e6ed7d658b28d6658303de5800fa81522695e51c9b0debd8f5e182)], [uint256(0x017656f31499f79ff6ba64de6e3ca57890572ac0c813c2d8a2d9c8e5af2426d2), uint256(0x0b8dbb823a6d27dff7b3fc11c9df4281e27edc76afec85aa4766a52683f9698a)]);
-        vk.gamma = Pairing.G2Point([uint256(0x2e9c564f09f384a0fe3be0f403f925667aa195d0584fe24fef5b3ff08ee0651b), uint256(0x080305245d284a558d1dfeed45b54cae8fa00114d3800db4372b9e90fa91f287)], [uint256(0x1f15fa483e4aaa996436abc7ec5a443a725d6ff853261186b444e44c3fae4ad6), uint256(0x1b1eb568a87d5bc8f350590a818d45491a235aa7db6cd9b34859ed7b2950443a)]);
-        vk.delta = Pairing.G2Point([uint256(0x0ed91ce28c661b32132545b3d4bd2e11b9b07a4aa608b3518bb6c7881a4fe187), uint256(0x1d3dab9cb4b39e137407c85905534056e5a5f91ff1bee2573dce8fc4d51decce)], [uint256(0x0ae2bf085931b354ed9097d344cb3e2d4c834773b1866199dc5ecbb4fafa0599), uint256(0x2eaad81c2387158485bc12de9e04ffe80b15bf66c44bc7e46430fe36755567a6)]);
-        vk.gamma_abc = new Pairing.G1Point[](4);
-        vk.gamma_abc[0] = Pairing.G1Point(uint256(0x0c9f254df08016fa062fc24e2cf5efb0a3a43c98ebe31bd21b1d4bc18c20819f), uint256(0x05f06e51da639d6c8fe2c520ede9ca0938cf76b2d4ea1ed599ddfd88a4e03af3));
-        vk.gamma_abc[1] = Pairing.G1Point(uint256(0x1ebb7f1d21ba3fff47ef5e5304ee907171b5b2323f72d23337874eb613ccd925), uint256(0x1cf8be0a97f1aadd10efcc8090f76dac03bbe056fb0bd84ec684e642e337cab7));
-        vk.gamma_abc[2] = Pairing.G1Point(uint256(0x0c1405210943c0699e8134f241a70308de61148f063fff2041acb51b146846bd), uint256(0x2877cb08ab0808ef5ed8fe1b33688e8805c7e2e44ce6508499c51e3b2b0776aa));
-        vk.gamma_abc[3] = Pairing.G1Point(uint256(0x0fa09bbdddea34daaa917ac5c88a4488aa124341bb3f445abd9c48ba4cf0af28), uint256(0x0a29f217c44c4bb083b66c0a4364dab36ed7698611d372cd6ec72901080089a3));
+        vk.alpha = Pairing.G1Point(uint256(0x00fa9e448b3c1f03bce1bb031595c7b570033ed64e3a2ec192f3d871d468b43e), uint256(0x22d974da6d58a19a657a73a94431fca33535cfb33a7b0fae80af92e8c4d65ac0));
+        vk.beta = Pairing.G2Point([uint256(0x295e8ac510ff9e2f75e37d17708ade7b3ca3ad6548f40935db7b414faa40b183), uint256(0x13935e208f0cafbfa5ec5ae8828666f30d4696504f3e13dfb4a05e6686886c18)], [uint256(0x12ce68214a931ffe7c4c9c11115668dba57293adfd173fb8d706fdb8a71d9b4b), uint256(0x1be7bf0e34fcc42749cf5b37961979fed4d66ad3325cdb2f165b423b89f8df4b)]);
+        vk.gamma = Pairing.G2Point([uint256(0x12df997ad36df23ec9a847fb9b2bc312c24b700ff9eeb16be6d67d45749b96f8), uint256(0x1f6f1a7450dcab836a4912598b354b63144c17d8ebc9ff3133d7d872a3667284)], [uint256(0x0f571b099877fb3117b5354e0691fe3de031fdb4794659ee74ad8d02642dbca4), uint256(0x1232edf9a80f6b166943cd2b05b350a4f15419a966f1eb96bbc333baf0526426)]);
+        vk.delta = Pairing.G2Point([uint256(0x029556692fb8cfccc31f17b70e44919827310f285ce13082c50aaed0ee4db426), uint256(0x1e09e3519380be12129c0dc8a3db4e773676281203da05c06ea3fe020e412403)], [uint256(0x02640a775f4aad5f7710fe9ec29993ea47649a54328771ec8f0e77f7bf266e04), uint256(0x1c10d7c0f73b12193724aa80ac190b0d90380d44c1f0f5837dedb5dbe00d3887)]);
+        vk.gamma_abc = new Pairing.G1Point[](2);
+        vk.gamma_abc[0] = Pairing.G1Point(uint256(0x269e876f3a529fe009975f05a03479f0b770d887f18f78dacf23a7eb8d271def), uint256(0x1d236c498a28c507ffa0c7eb1107e91c79f9ce8678164da369741af4e843cdb8));
+        vk.gamma_abc[1] = Pairing.G1Point(uint256(0x1c9e08f2bcf5e26ddfee96c7a0ab3b6ec1852bf0ce47e20ed410cb29290e5542), uint256(0x27f7f79e9943bbafccbe17c29a283a954f55ce2bf21faee93f4fb369f4246b01));
     }
     function verify(uint[] memory input, Proof memory proof) internal view returns (uint) {
         uint256 snark_scalar_field = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         VerifyingKey memory vk = verifyingKey();
         require(input.length + 1 == vk.gamma_abc.length);
-
+        // Compute the linear combination vk_x
         Pairing.G1Point memory vk_x = Pairing.G1Point(0, 0);
         for (uint i = 0; i < input.length; i++) {
-            require(input[i] < snark_scalar_field, "Input too large");
+            require(input[i] < snark_scalar_field);
             vk_x = Pairing.addition(vk_x, Pairing.scalar_mul(vk.gamma_abc[i + 1], input[i]));
         }
         vk_x = Pairing.addition(vk_x, vk.gamma_abc[0]);
-
-        if (!Pairing.pairingProd4(
-            proof.a, proof.b,
-            Pairing.negate(vk_x), vk.gamma,
-            Pairing.negate(proof.c), vk.delta,
-            Pairing.negate(vk.alpha), vk.beta
-        )) return 1;
-
+        if(!Pairing.pairingProd4(
+             proof.a, proof.b,
+             Pairing.negate(vk_x), vk.gamma,
+             Pairing.negate(proof.c), vk.delta,
+             Pairing.negate(vk.alpha), vk.beta)) return 1;
         return 0;
+    }
+    function verifyTx(
+            Proof memory proof, uint[1] memory input
+        ) public view returns (bool r) {
+        uint[] memory inputValues = new uint[](1);
+        
+        for(uint i = 0; i < input.length; i++){
+            inputValues[i] = input[i];
+        }
+        if (verify(inputValues, proof) == 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
