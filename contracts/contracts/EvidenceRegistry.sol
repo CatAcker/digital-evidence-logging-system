@@ -10,11 +10,19 @@ contract EvidenceRegistry is Verifier {
         uint timestamp;
     }
 
+    event EvidenceSubmitted(
+        address indexed submitter,
+        string hash,
+        string metadata,
+        uint256 timestamp
+    );
+
     mapping(address => Evidence[]) public logs;
 
     // Standard submission (no ZKP)
     function submitEvidence(string memory hash, string memory metadata) public {
         logs[msg.sender].push(Evidence(hash, metadata, block.timestamp));
+        emit EvidenceSubmitted(msg.sender, hash, metadata, block.timestamp);
     }
 
     // ZKP-validated submission
@@ -26,6 +34,7 @@ contract EvidenceRegistry is Verifier {
     ) public {
         require(verify(input, proof) == 0, "Invalid ZK proof");
         logs[msg.sender].push(Evidence(hash, metadata, block.timestamp));
+        emit EvidenceSubmitted(msg.sender, hash, metadata, block.timestamp);
     }
 
     function getEvidenceCount(address user) public view returns (uint) {

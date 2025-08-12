@@ -1,13 +1,17 @@
-import React from "react";
+// fe/src/App.jsx
 import EvidenceForm from "./components/EvidenceForm";
+import EvidenceList from "./components/EvidenceList";
+import EvidenceVerify from "./components/EvidenceVerify";
 
-function App() {
+export default function App() {
   return (
-    <div className="App">
-      <h1>Submit Evidence</h1>
+    <div style={{ maxWidth: 820, margin: "2rem auto", fontFamily: "system-ui, sans-serif" }}>
+      <h1>Digital Evidence (ZK‑Verified)</h1>
       <EvidenceForm />
+      <hr style={{ margin: "2rem 0" }} />
+      <EvidenceList />
+      <hr style={{ margin: "2rem 0" }} />
+      <EvidenceVerify />
     </div>
   );
 }
-
-export default App;
