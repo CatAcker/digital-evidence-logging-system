@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ethers } from "ethers";
 import EvidenceRegistry from "../abis/EvidenceRegistry.json";
+import addresses from "../abis/addresses.json";
 
 // Same address you used in EvidenceForm (change if you redeploy)
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const CONTRACT_ADDRESS = addresses.EvidenceRegistry;
 const abi = EvidenceRegistry.abi;
 
 // Optional: set REACT_APP_RPC_URL for read-only (e.g., Hardhat/Infura)
@@ -38,12 +39,11 @@ export default function EvidenceList() {
 
         // 1) Historical events
         const latest = await provider.getBlockNumber();
-        // Adjust this name to your actual event name if different:
         const logs = await contract.queryFilter("EvidenceSubmitted", fromBlock, latest);
 
         const history = logs.map((ev) => formatEvent(ev));
         if (!cancelled) {
-          setItems(dedupeById(history));
+          setItems(sortByTimestamp(dedupeById(history)));
           setStatus("idle");
         }
 
@@ -52,7 +52,7 @@ export default function EvidenceList() {
           const ev = args[args.length - 1]; // last arg is the Event object
           const row = formatEvent(ev);
           if (!cancelled) {
-            setItems((prev) => dedupeById([row, ...prev]));
+            setItems((prev) => sortByTimestamp(dedupeById([row, ...prev])));
           }
         };
         contract.on("EvidenceSubmitted", onEvent);
@@ -60,7 +60,9 @@ export default function EvidenceList() {
         // Cleanup
         return () => {
           cancelled = true;
-          try { contract?.removeAllListeners?.("EvidenceSubmitted"); } catch {}
+          try {
+            contract?.removeAllListeners?.("EvidenceSubmitted");
+          } catch {}
         };
       } catch (e) {
         console.error(e);
@@ -71,11 +73,17 @@ export default function EvidenceList() {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [fromBlock]);
 
   if (status === "error") {
-    return <div className="card">Failed to load evidence. <span className="muted">{error}</span></div>;
+    return (
+      <div className="card">
+        Failed to load evidence. <span className="muted">{error}</span>
+      </div>
+    );
   }
 
   return (
@@ -89,11 +97,15 @@ export default function EvidenceList() {
             <li key={item.id} className="card">
               <div className="row" style={{ justifyContent: "space-between" }}>
                 <div>
-                  <div><strong>Hash:</strong> {item.hash}</div>
+                  <div>
+                    <strong>Hash:</strong> {item.hash}
+                  </div>
                   <div className="muted">{item.metadata}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div><strong>By:</strong> {short(item.submittedBy)}</div>
+                  <div>
+                    <strong>By:</strong> {short(item.submittedBy)}
+                  </div>
                   <div className="muted">{item.timeString}</div>
                 </div>
               </div>
@@ -105,12 +117,8 @@ export default function EvidenceList() {
   );
 }
 
-// --- helpers ---
-
 function formatEvent(ev) {
-  // ethers v6 Event object: ev.args is array-like with named properties (if ABI names exist)
   const a = ev.args || [];
-  // Adjust these names/positions if your ABI uses different field names or order:
   const submittedBy = a.submitter ?? a.sender ?? a.owner ?? a.from ?? a[0] ?? "0x";
   const hash = a.hash ?? a.fileHash ?? a.commitment ?? a[1] ?? "";
   const metadata = a.metadata ?? a.note ?? a.description ?? a[2] ?? "";
@@ -125,7 +133,9 @@ function formatEvent(ev) {
     metadata: metadata,
     submittedBy: submittedBy,
     timestamp: ts,
-    timeString: ts ? new Date(ts * 1000).toLocaleString() : `block ${blockNumber}`,
+    timeString: ts
+      ? new Date(ts * 1000).toLocaleString()
+      : `block ${blockNumber}`,
   };
 }
 
@@ -139,14 +149,25 @@ function toNumber(v) {
 }
 
 function short(addr = "") {
-  return addr.length > 10 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
+  return addr.length > 10
+    ? `${addr.slice(0, 6)}…${addr.slice(-4)}`
+    : addr;
 }
 
 function dedupeById(rows) {
   const seen = new Set();
   const out = [];
   for (const r of rows) {
-    if (!seen.has(r.id)) { seen.add(r.id); out.push(r); }
+    if (!seen.has(r.id)) {
+      seen.add(r.id);
+      out.push(r);
+    }
   }
   return out;
+}
+
+function sortByTimestamp(rows, newestFirst = true) {
+  return [...rows].sort((a, b) =>
+    newestFirst ? b.timestamp - a.timestamp : a.timestamp - b.timestamp
+  );
 }
