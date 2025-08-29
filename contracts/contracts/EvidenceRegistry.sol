@@ -1,48 +1,53 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "./verifier.sol";
 
 contract EvidenceRegistry is Verifier {
     struct Evidence {
-        string hash;
-        string metadata;
-        uint timestamp;
+        bytes32 fileHash;
+        bytes32 metaHash;
+        uint256 timestamp;
+        string  fileUrl;
     }
 
     event EvidenceSubmitted(
         address indexed submitter,
-        string hash,
-        string metadata,
+        bytes32 indexed fileHash,
+        bytes32 indexed metaHash,
+        string fileUrl,
         uint256 timestamp
     );
 
     mapping(address => Evidence[]) public logs;
 
-    // Standard submission (no ZKP)
-    function submitEvidence(string memory hash, string memory metadata) public {
-        logs[msg.sender].push(Evidence(hash, metadata, block.timestamp));
-        emit EvidenceSubmitted(msg.sender, hash, metadata, block.timestamp);
+    function submitEvidence(bytes32 fileHash, bytes32 metaHash, string memory fileUrl) public {
+        logs[msg.sender].push(Evidence(fileHash, metaHash, block.timestamp, fileUrl));
+        emit EvidenceSubmitted(msg.sender, fileHash, metaHash, fileUrl, block.timestamp);
     }
 
-    // ZKP-validated submission
     function submitEvidenceWithProof(
-        string memory hash,
-        string memory metadata,
+        bytes32 fileHash,
+        bytes32 metaHash,
+        string memory fileUrl,
         Proof memory proof,
-        uint[] memory input
+        uint256[] memory input
     ) public {
         require(verify(input, proof) == 0, "Invalid ZK proof");
-        logs[msg.sender].push(Evidence(hash, metadata, block.timestamp));
-        emit EvidenceSubmitted(msg.sender, hash, metadata, block.timestamp);
+        logs[msg.sender].push(Evidence(fileHash, metaHash, block.timestamp, fileUrl));
+        emit EvidenceSubmitted(msg.sender, fileHash, metaHash, fileUrl, block.timestamp);
     }
 
-    function getEvidenceCount(address user) public view returns (uint) {
+    function getEvidenceCount(address user) external view returns (uint256) {
         return logs[user].length;
     }
 
-    function getEvidence(address user, uint index) public view returns (string memory, string memory, uint) {
+    function getEvidence(address user, uint256 index)
+        external
+        view
+        returns (bytes32, bytes32, string memory, uint256)
+    {
         Evidence memory e = logs[user][index];
-        return (e.hash, e.metadata, e.timestamp);
+        return (e.fileHash, e.metaHash, e.fileUrl, e.timestamp);
     }
 }

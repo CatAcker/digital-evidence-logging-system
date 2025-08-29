@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { ethers } from "ethers";
 import EvidenceRegistry from "../abis/EvidenceRegistry.json";
+import addresses from "../abis/addresses.json";
 
 const abi = EvidenceRegistry.abi;
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // update on redeploy
+const CONTRACT_ADDRESS = addresses.EvidenceRegistry; // update on redeploy
 const EVENT_NAME = "EvidenceSubmitted"; // adjust if different
 
 function getProvider() {
