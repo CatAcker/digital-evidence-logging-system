@@ -1,0 +1,276 @@
+/* verify.css — purely presentational, no logic touched */
+:root {
+  --vx-bg: #ffffff;
+  --vx-txt: #0f172a;            /* slate-900 */
+  --vx-muted: #6b7280;          /* gray-500 */
+  --vx-border: #e5e7eb;         /* gray-200 */
+  --vx-border-dark: #1f2937;    /* gray-800 */
+  --vx-emerald: #10b981;
+  --vx-indigo: #6366f1;
+  --vx-violet: #8b5cf6;
+}
+
+/* container + gradient accent */
+.verify {
+  position: relative;
+  border-radius: 5px;
+  overflow: hidden;
+  isolation: isolate;
+}
+.verify::before {
+  content: "";
+  position: absolute;
+  inset-inline: 10%;
+  top: -120px;
+  height: 220px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--vx-emerald) 0%, var(--vx-indigo) 50%, var(--vx-violet) 100%);
+  filter: blur(42px);
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* headings */
+.verify h2 {
+  margin: 0 0 8px 0;
+  letter-spacing: 0.01em;
+}
+
+/* ----------------------- */
+/* Mode toggle (radio pill) */
+/* ----------------------- */
+.verify .verifyType {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 4px;
+  border: 1px solid var(--vx-border);
+  border-radius: 999px;
+  background: #f8fafc; /* slate-50 */
+}
+@media (prefers-color-scheme: dark) {
+  .verify .verifyType {
+    border-color: var(--vx-border-dark);
+    background: rgba(17, 24, 39, 0.7);
+  }
+}
+.verify .verifyType label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease;
+  border: 1px solid transparent;
+  position: relative;
+}
+.verify .verifyType label input {
+  display: none; /* we’ll style via :has() and ::before bullet */
+}
+.verify .verifyType label span {
+  position: relative;
+  padding-left: 22px; /* room for faux radio */
+}
+.verify .verifyType label span::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid #9ca3af; /* gray-400 */
+  background: transparent;
+}
+.verify .verifyType label:has(input:checked) {
+  background: #ffffff4b;
+  border-color: color-mix(in srgb, var(--vx-indigo) 40%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--vx-indigo) 12%, transparent);
+  transform: translateY(-1px);
+}
+.verify .verifyType label:has(input:checked) span::before {
+  border-color: var(--vx-indigo);
+  background: radial-gradient(circle at 50% 50%, var(--vx-indigo) 55%, transparent 57%);
+}
+.verify .verifyType label:hover { background: rgba(255, 255, 255, 0.149); }
+
+/* ----------------------- */
+/* Forms / inputs / buttons */
+/* ----------------------- */
+.verify form {
+  margin-top: 20px;
+}
+.verify form label {
+  color: var(--vx-muted);
+  font-size: 0.9rem;
+}
+
+/* file input dropzone vibe */
+.verify .selectFile {
+  display: grid;
+  gap: 18px;;
+}
+
+.verify .selectFile input[type="file"] {
+  background: linear-gradient(180deg, #8b5cf6, #10b981);
+  padding: 16px;
+  border-radius: 16px;
+}
+.verify .selectFile input[type="file"]:hover {
+  border-color: color-mix(in srgb, var(--vx-indigo) 40%, var(--vx-border));
+  box-shadow: 0 4px 16px rgba(99,102,241,.12);
+}
+.verify .selectFile input[type="file"]::file-selector-button {
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: #eef2ff; /* indigo-50 */
+  color: #3730a3;      /* indigo-800 */
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .15s ease, transform .1s ease;
+  margin-right: 12px;
+}
+.verify .selectFile input[type="file"]::file-selector-button:hover {
+  filter: brightness(0.70);
+}
+.verify .selectFile input[type="file"]::file-selector-button:active {
+  transform: translateY(1px);
+}
+
+/* text input */
+.verify form input[type="text"],
+.verify form input:not([type]) {
+  border: 1px solid var(--vx-border);
+  background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.95));
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: .95rem;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.verify form input[type="text"]:focus,
+.verify form input:not([type]):focus {
+  border-color: color-mix(in srgb, var(--vx-emerald) 45%, var(--vx-border));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--vx-emerald) 14%, transparent);
+}
+
+/* buttons */
+.verify form button {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: #fff;
+  background: linear-gradient(90deg, #111827 0%, #374151 100%); /* gray-900 -> gray-700 */
+  box-shadow: 0 6px 20px rgba(15,23,42,.18);
+  transition: transform .12s ease, filter .15s ease, box-shadow .15s ease;
+}
+.verify form button:hover { filter: brightness(2); color: #10b981; }
+.verify form button:active { transform: translateY(1px); }
+.verify form button[disabled] {
+  opacity: .65;
+  cursor: not-allowed;
+  filter: grayscale(.2);
+}
+
+/* computed hash box */
+.verify .selectFile .font-mono {
+  word-break: break-all;
+}
+.verify .selectFile .font-mono::selection {
+  background: #dcfce7; /* emerald-100 */
+}
+
+/* -------------- */
+/* Error styling  */
+/* -------------- */
+.verify .mt-4.rounded-xl[class*="bg-red-"],
+.verify .mt-4.rounded-xl[class*="bg-red-"] .font-semibold {
+  /* enhance the error box without changing markup */
+  backdrop-filter: saturate(110%) blur(2px);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, .15);
+}
+
+/* ---------------- */
+/* Results – cards  */
+/* ---------------- */
+.verify .space-y-4 ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+.verify .space-y-4 ul li {
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid var(--vx-border);
+  background: linear-gradient(180deg, #fafafa, #ffffff);
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(2,6,23,.06);
+  transition: transform .15s ease, box-shadow .2s ease;
+  overflow: hidden;
+}
+.verify .space-y-4 ul li::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 17px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--vx-emerald) 35%, transparent), color-mix(in srgb, var(--vx-indigo) 25%, transparent), color-mix(in srgb, var(--vx-violet) 35%, transparent));
+  opacity: 0;
+  filter: blur(18px);
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.verify .space-y-4 ul li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(2,6,23,.10);
+}
+.verify .space-y-4 ul li:hover::after { opacity: .22; }
+
+.verify .space-y-4 ul li .font-mono { 
+  font-size: 12.5px;
+  color: #111827;
+}
+.verify .space-y-4 ul li .font-mono .font-semibold {
+  color: #374151;
+}
+.verify .space-y-4 ul li .text-sm { 
+  margin-top: 8px;
+  color: #334155; /* slate-700 */
+}
+.verify .space-y-4 ul li .text-xs { 
+  margin-top: 6px;
+  color: #6b7280;
+}
+
+/* empty state box (dashed border) */
+.verify [class*="border-dashed"] {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.95)),
+    repeating-linear-gradient(-45deg, rgba(99,102,241,.06) 0 10px, rgba(139,92,246,.06) 10px 20px);
+  border-radius: 18px;
+}
+
+/* -------------------------- */
+/* Dark mode niceties override */
+/* -------------------------- */
+@media (prefers-color-scheme: dark) {
+  .verify { color: #e5e7eb; }
+  .verify::before { opacity: .18; }
+
+  .verify .space-y-4 ul li {
+    background: linear-gradient(180deg, rgba(17,24,39,.9), rgba(17,24,39,.7));
+    border-color: var(--vx-border-dark);
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  .verify .space-y-4 ul li .font-mono { color: #e5e7eb; }
+  .verify .space-y-4 ul li .font-semibold { color: #f3f4f6; }
+  .verify .space-y-4 ul li .text-sm { color: #cbd5e1; }
+  .verify .space-y-4 ul li .text-xs { color: #94a3b8; }
+}

@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ethers } from "ethers";
-import EvidenceRegistry from "../abis/EvidenceRegistry.json";   // V1 ABI
+import EvidenceRegistry from "../abis/EvidenceRegistry.json";
 import addresses from "../abis/addresses.json";
+import "./evidence-list.css"; // ← new stylesheet
 
-const CONTRACT_ADDRESS = addresses.EvidenceRegistry;            // V1 address
+const CONTRACT_ADDRESS = addresses.EvidenceRegistry;
 const abi = EvidenceRegistry.abi;
 
 function getProvider() {
@@ -34,73 +35,106 @@ export default function EvidenceList() {
         const provider = getProvider();
         contract = new ethers.Contract(CONTRACT_ADDRESS, abi, provider);
 
-        // 1) history
+        // initial history
         const latest = await provider.getBlockNumber();
-        const logs = await contract.queryFilter("EvidenceSubmitted", fromBlock, latest);
+        const logs = await contract.queryFilter(
+          "EvidenceSubmitted",
+          fromBlock,
+          latest
+        );
         const history = logs.map(formatEvent);
         if (!cancelled) {
           setItems(sortByTimestamp(dedupeById(history)));
           setStatus("idle");
         }
 
-        // 2) live updates
+        // live updates
         const onEvent = (...args) => {
           const ev = args[args.length - 1];
           const row = formatEvent(ev);
-          if (!cancelled) setItems((prev) => sortByTimestamp(dedupeById([row, ...prev])));
+          if (!cancelled)
+            setItems((prev) => sortByTimestamp(dedupeById([row, ...prev])));
         };
         contract.on("EvidenceSubmitted", onEvent);
 
         return () => {
-          try { contract?.removeAllListeners?.("EvidenceSubmitted"); } catch {}
+          try {
+            contract?.removeAllListeners?.("EvidenceSubmitted");
+          } catch {}
         };
       } catch (e) {
         console.error(e);
-        if (!cancelled) { setError(e?.message || "Failed to load events"); setStatus("error"); }
+        if (!cancelled) {
+          setError(e?.message || "Failed to load events");
+          setStatus("error");
+        }
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [fromBlock]);
 
   if (status === "error") {
-    return <div className="card">Failed to load evidence. <span className="muted">{error}</span></div>;
+    return (
+      <div className="evl evl-card">
+        Failed to load evidence. <span className="muted">{error}</span>
+      </div>
+    );
   }
 
   return (
-    <div className="card" style={{ maxWidth: 900 }}>
-      <h2 style={{ marginTop: 0 }}>Evidence</h2>
-      {items.length === 0 ? (
-        <div className="muted">No evidence yet.</div>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {items.map((item) => (
-            <li key={item.id} className="card" style={{ marginBottom: 12 }}>
-              <div className="row" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" }}>
-                <div style={{ minWidth: 0 }}>
-                  <div><strong>Hash:</strong> {item.hash}</div>
+    <div className="evl evl-card">
+      <h2 className="evl-title">Evidence</h2>
 
-                  {/* Show note or raw metadata */}
-                  <div className="muted" style={{ marginTop: 4, overflowWrap: "anywhere" }}>
-                    {item.note ?? item.metadata}
-                  </div>
-
-                  {/* Download link if metadata contained fileUrl */}
-                  {item.fileUrl && (
-                    <div style={{ marginTop: 6, overflowWrap: "anywhere" }}>
-                      <a href={item.fileUrl} target="_blank" rel="noreferrer">Download file</a>
-                    </div>
-                  )}
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div><strong>By:</strong> {short(item.submittedBy)}</div>
-                  <div className="muted">{item.timeString}</div>
-                </div>
-              </div>
-            </li>
+      {status === "loading" && (
+        <ul className="evl-list">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="evl-item evl-skel" />
           ))}
         </ul>
       )}
+
+      {status !== "loading" &&
+        (items.length === 0 ? (
+          <div className="evl-empty muted">No evidence yet.</div>
+        ) : (
+          <ul className="evl-list">
+            {items.map((item) => (
+              <li key={item.id} className="evl-item">
+                <div className="evl-row">
+                  <div className="evl-colL">
+                    <div className="evl-hash">
+                      <span className="evl-label">Hash:</span>{" "}
+                      <span className="evl-hashValue">{item.hash}</span>
+                    </div>
+
+                    <div className="muted evl-note">
+                      {item.note ?? item.metadata}
+                    </div>
+
+                    {item.fileUrl && (
+                      <div className="evl-file">
+                        <a href={item.fileUrl} target="_blank" rel="noreferrer">
+                          Download file
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="evl-colR">
+                    <div className="evl-by">
+                      <span className="evl-label">By:</span>{" "}
+                      {short(item.submittedBy)}
+                    </div>
+                    <div className="muted evl-time">{item.timeString}</div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ))}
     </div>
   );
 }
@@ -108,12 +142,12 @@ export default function EvidenceList() {
 /** Parse V1 event: EvidenceSubmitted(address submitter, string hash, string metadata, uint256 timestamp) */
 function formatEvent(ev) {
   const a = ev.args || [];
-  const submittedBy = a.submitter ?? a.sender ?? a.owner ?? a.from ?? a[0] ?? "0x";
+  const submittedBy =
+    a.submitter ?? a.sender ?? a.owner ?? a.from ?? a[0] ?? "0x";
   const hash = a.hash ?? a[1] ?? "";
   const metadata = a.metadata ?? a[2] ?? "";
   const ts = toNumber(a.timestamp ?? a.time ?? a[3] ?? 0);
 
-  // Try to parse metadata as JSON: { note, fileUrl }
   let note;
   let fileUrl = "";
   try {
@@ -122,7 +156,9 @@ function formatEvent(ev) {
       if (typeof o.note === "string") note = o.note;
       if (typeof o.fileUrl === "string") fileUrl = o.fileUrl;
     }
-  } catch { /* metadata was plain text; ignore */ }
+  } catch {
+    /* metadata was plain text; ignore */
+  }
 
   const blockNumber = ev.blockNumber ?? ev.log?.blockNumber ?? 0;
   const logIndex = ev.index ?? ev.log?.index ?? ev.logIndex ?? 0;
@@ -135,7 +171,9 @@ function formatEvent(ev) {
     note,
     fileUrl,
     timestamp: ts,
-    timeString: ts ? new Date(ts * 1000).toLocaleString() : `block ${blockNumber}`,
+    timeString: ts
+      ? new Date(ts * 1000).toLocaleString()
+      : `block ${blockNumber}`,
   };
 }
 
@@ -151,10 +189,17 @@ function short(addr = "") {
   return addr.length > 10 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
 }
 function dedupeById(rows) {
-  const seen = new Set(); const out = [];
-  for (const r of rows) if (!seen.has(r.id)) { seen.add(r.id); out.push(r); }
+  const seen = new Set();
+  const out = [];
+  for (const r of rows)
+    if (!seen.has(r.id)) {
+      seen.add(r.id);
+      out.push(r);
+    }
   return out;
 }
 function sortByTimestamp(rows, newestFirst = true) {
-  return [...rows].sort((a, b) => newestFirst ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
+  return [...rows].sort((a, b) =>
+    newestFirst ? b.timestamp - a.timestamp : a.timestamp - b.timestamp
+  );
 }

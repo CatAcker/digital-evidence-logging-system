@@ -2,10 +2,11 @@ import React, { useMemo, useState } from "react";
 import { ethers } from "ethers";
 import EvidenceRegistry from "../abis/EvidenceRegistry.json";
 import addresses from "../abis/addresses.json";
+import "./evidence-verify.css";
 
 const abi = EvidenceRegistry.abi;
-const CONTRACT_ADDRESS = addresses.EvidenceRegistry; // update on redeploy
-const EVENT_NAME = "EvidenceSubmitted"; // adjust if different
+const CONTRACT_ADDRESS = addresses.EvidenceRegistry;
+const EVENT_NAME = "EvidenceSubmitted";
 
 function getProvider() {
   const rpc = process.env.REACT_APP_RPC_URL;
@@ -16,7 +17,7 @@ function getProvider() {
 
 async function keccak256File(file) {
   const buf = await file.arrayBuffer();
-  return ethers.keccak256(new Uint8Array(buf)); // 0x-prefixed hex
+  return ethers.keccak256(new Uint8Array(buf));
 }
 
 function toNumber(v) {
@@ -30,7 +31,8 @@ function toNumber(v) {
 
 function formatEvent(ev) {
   const a = ev.args || [];
-  const submittedBy = a.submitter ?? a.sender ?? a.owner ?? a.from ?? a[0] ?? "0x";
+  const submittedBy =
+    a.submitter ?? a.sender ?? a.owner ?? a.from ?? a[0] ?? "0x";
   const hash = a.hash ?? a.fileHash ?? a.commitment ?? a[1] ?? "";
   const metadata = a.metadata ?? a.note ?? a.description ?? a[2] ?? "";
   const ts = toNumber(a.timestamp ?? a.time ?? a[3] ?? 0);
@@ -44,20 +46,21 @@ function formatEvent(ev) {
     hash: typeof hash === "string" ? hash : String(hash),
     metadata: typeof metadata === "string" ? metadata : String(metadata),
     timestamp: ts,
-    timeString: ts ? new Date(ts * 1000).toLocaleString() : `block ${blockNumber}`,
+    timeString: ts
+      ? new Date(ts * 1000).toLocaleString()
+      : `block ${blockNumber}`,
   };
 }
 
-// strict keccak-256 hex validator (0x + 64 hex chars)
 function isKeccak256Hex(s) {
   return /^0x[0-9a-fA-F]{64}$/.test(s || "");
 }
 
 export default function EvidenceVerify() {
-  const [mode, setMode] = useState("file"); // 'file' | 'hash'
+  const [mode, setMode] = useState("file");
   const [file, setFile] = useState(null);
   const [typedHash, setTypedHash] = useState("");
-  const [computedHash, setComputedHash] = useState(""); // from file
+  const [computedHash, setComputedHash] = useState("");
   const [matches, setMatches] = useState([]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
@@ -80,7 +83,8 @@ export default function EvidenceVerify() {
       const logs = await contract.queryFilter(EVENT_NAME, fromBlock, latest);
       const rows = logs.map(formatEvent);
 
-      const norm = (s) => (typeof s === "string" ? s.trim().toLowerCase() : String(s));
+      const norm = (s) =>
+        typeof s === "string" ? s.trim().toLowerCase() : String(s);
       const target = norm(queryHash);
 
       const found = rows.filter((r) => norm(r.hash) === target);
@@ -113,7 +117,6 @@ export default function EvidenceVerify() {
     const h = typedHash.trim();
     if (!h) return;
 
-    // If it looks like hex, enforce strict keccak; else assume decimal commitment (demo mode)
     if (h.startsWith("0x")) {
       if (!isKeccak256Hex(h)) {
         setError("Invalid hash: must be 0x + 64 hex chars (Keccak-256).");
@@ -132,91 +135,153 @@ export default function EvidenceVerify() {
   };
 
   return (
-    <div className="card">
-      <h2 style={{ marginTop: 0 }}>Verify Evidence</h2>
+    <div className="verify mt-6 rounded-2xl border border-gray-200/70 bg-white p-6 shadow-sm dark:border-gray-800/60 dark:bg-gray-950">
+      <h2 className="text-2xl font-semibold tracking-tight">Verify Evidence</h2>
 
-      <div className="row" style={{ gap: 12, marginBottom: 12 }}>
-        <label>
+      {/* Mode toggle */}
+      <div className="verifyType">
+        <label className="">
           <input
             type="radio"
             name="verifyMode"
             value="file"
             checked={mode === "file"}
             onChange={() => setMode("file")}
-          />{" "}
-          By File (re-compute Keccak-256)
+            className="h-4 w-4 accent-green-600"
+          />
+          <span>By File (re-compute Keccak-256)</span>
         </label>
-        <label>
+
+        <label
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition
+          ${
+            mode === "hash"
+              ? "border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20"
+              : "border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-300"
+          }`}
+        >
           <input
             type="radio"
             name="verifyMode"
             value="hash"
             checked={mode === "hash"}
             onChange={() => setMode("hash")}
-          />{" "}
-          By Hash (paste on-chain value)
+            className="h-4 w-4 accent-indigo-600"
+          />
+          <span>By Hash (paste on-chain value)</span>
         </label>
       </div>
 
+      {/* Forms */}
       {mode === "file" ? (
-        <form onSubmit={onVerifyFile} className="row" style={{ flexDirection: "column", gap: 12 }}>
-          <label className="muted">Select the original file you expect was recorded on-chain.</label>
-          <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-          <button className="button" type="submit" disabled={status === "loading"}>
+        <form onSubmit={onVerifyFile} className="selectFile">
+          <label className="text-sm text-gray-500 dark:text-gray-400">
+            Select the original file you expect was recorded on-chain.
+          </label>
+
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="verify-btn"
+          >
             {status === "loading" ? "Verifying..." : "Verify File"}
           </button>
+
           {computedHash && (
-            <div className="muted" style={{ wordBreak: "break-all" }}>
-              Computed Keccak-256: {computedHash}
+            <div className="rounded-md bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+              <span className="font-medium text-gray-700 dark:text-gray-200">
+                Computed Keccak-256:
+              </span>{" "}
+              <span className="break-all font-mono">{computedHash}</span>
             </div>
           )}
         </form>
       ) : (
-        <form onSubmit={onVerifyHash} className="row" style={{ flexDirection: "column", gap: 12 }}>
-          <label className="muted">Paste the on-chain hash (0x… for file mode) or decimal commitment (demo mode).</label>
+        <form onSubmit={onVerifyHash} className="mt-5 flex flex-col gap-3">
+          <label className="text-sm text-gray-500 dark:text-gray-400">
+            Paste the on-chain hash (0x… for file mode) or decimal commitment
+            (demo mode).
+          </label>
+
           <input
-            className="input"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none ring-0 transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:ring-gray-800"
             placeholder="0xabc… or 12345"
             value={typedHash}
             onChange={(e) => setTypedHash(e.target.value)}
           />
-          <button className="button" type="submit" disabled={status === "loading"}>
+
+          <button
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
+            type="submit"
+            disabled={status === "loading"}
+          >
             {status === "loading" ? "Verifying..." : "Verify Hash"}
           </button>
         </form>
       )}
 
+      {/* Error */}
       {status === "error" && (
-        <div className="card" style={{ marginTop: 12 }}>
-          Failed: <span className="muted">{error}</span>
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+          <div className="font-semibold">Failed</div>
+          <div className="mt-1 text-red-600/90 dark:text-red-300/90">
+            {error}
+          </div>
         </div>
       )}
 
+      {/* Results */}
       {status === "done" && (
-        <div className="card" style={{ marginTop: 12 }}>
+        <div className="mt-6">
           {matches.length === 0 ? (
-            <div>No on-chain record found for this value.</div>
+            <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              No on-chain record found for this value.
+            </div>
           ) : (
-            <>
-              <div><strong>Match found ✅</strong></div>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-green-700 dark:text-green-400">
+                ✅ Match found
+              </h3>
+              <ul className="space-y-4">
                 {matches.map((m) => (
-                  <li key={m.id} className="card">
-                    <div style={{ wordBreak: "break-all" }}>
-                      <strong>Hash:</strong> {m.hash}
+                  <li
+                    key={m.id}
+                    className="rounded-2xl border border-gray-200 bg-gray-50 p-5 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
+                  >
+                    <div className="break-words font-mono text-sm">
+                      <span className="font-semibold text-gray-700 dark:text-gray-200">
+                        Hash:
+                      </span>{" "}
+                      {m.hash}
                     </div>
-                    <div className="muted">{m.metadata}</div>
-                    <div className="muted">By {short(m.submittedBy)} at {m.timeString}</div>
+                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                      {m.metadata}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Submitted by{" "}
+                      <span className="font-medium">
+                        {short(m.submittedBy)}
+                      </span>{" "}
+                      at {m.timeString}
+                    </div>
                   </li>
                 ))}
               </ul>
-            </>
+            </div>
           )}
         </div>
       )}
 
-      <p className="muted" style={{ marginTop: 12 }}>
-        Tip: “Verify by File” works for records stored as file Keccak-256. For “Numeric commitment (demo)” records, use “Verify by Hash” and paste the decimal commitment.
+      <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+        Tip: “Verify by File” works for records stored as file Keccak-256. For
+        “Numeric commitment (demo)” records, use “Verify by Hash” and paste the
+        decimal commitment.
       </p>
     </div>
   );

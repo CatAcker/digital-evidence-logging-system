@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ethers, toBigInt as toBig } from "ethers";
 import EvidenceRegistry from "../abis/EvidenceRegistry.json";
 import addresses from "../abis/addresses.json";
+import "./evidence-form.css";
 
 const abi = EvidenceRegistry.abi;
 const CONTRACT_ADDRESS = addresses.EvidenceRegistry;
@@ -21,7 +22,10 @@ async function uploadEvidenceFile(file) {
   form.append("file", file);
   const res = await fetch(UPLOAD_URL, { method: "POST", body: form });
   const text = await res.text();
-  if (!res.ok) throw new Error(`Upload failed ${res.status}: ${text || "(no response body)"}`);
+  if (!res.ok)
+    throw new Error(
+      `Upload failed ${res.status}: ${text || "(no response body)"}`
+    );
   return JSON.parse(text);
 }
 
@@ -31,10 +35,10 @@ export default function EvidenceForm() {
   const [proofFile, setProofFile] = useState(null);
   const [evidenceFile, setEvidenceFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState("");
 
   const handleProofUpload = (e) => setProofFile(e.target.files?.[0] || null);
-  const handleEvidenceUpload = (e) => setEvidenceFile(e.target.files?.[0] || null);
+  const handleEvidenceUpload = (e) =>
+    setEvidenceFile(e.target.files?.[0] || null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,42 +46,37 @@ export default function EvidenceForm() {
       if (!window.ethereum) return alert("Please install MetaMask");
       if (!proofFile) return alert("Upload ZoKrates proof.json");
       if (!evidenceFile) return alert("Choose an evidence file");
-      if (secret.trim() === "") return alert("Enter the ZoKrates secret (e.g., 42)");
+      if (secret.trim() === "")
+        return alert("Enter the ZoKrates secret (e.g., 42)");
       setSubmitting(true);
 
-    
       await window.ethereum.request({ method: "eth_requestAccounts" });
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const { chainId } = await provider.getNetwork();
       if (chainId !== 31337n) {
-        alert(`Wrong network: select localhost 31337 (current ${chainId.toString()}).`);
+        alert(
+          `Wrong network: select localhost 31337 (current ${chainId.toString()}).`
+        );
         return;
       }
       const code = await provider.getCode(CONTRACT_ADDRESS);
       if (!code || code === "0x") {
-        alert(`No contract at ${CONTRACT_ADDRESS}. Redeploy or update addresses.json.`);
+        alert(
+          `No contract at ${CONTRACT_ADDRESS}. Redeploy or update addresses.json.`
+        );
         return;
       }
 
-    
       const commitmentBig = toBig(secret) * 12345n;
-
-    
       const localKeccak = await keccak256File(evidenceFile);
 
-    
       const up = await uploadEvidenceFile(evidenceFile);
       const fileUrl = SERVER_BASE ? `${SERVER_BASE}${up.url}` : up.url;
-      setDownloadUrl(fileUrl);
 
-    
       const onChainHash = up.keccak256 || localKeccak;
-
-    
       const metadataJson = JSON.stringify({ note: metadata, fileUrl });
 
-    
       const proofText = await proofFile.text();
       const json = JSON.parse(proofText);
 
@@ -100,7 +99,6 @@ export default function EvidenceForm() {
       }
       const inputs = inputsDyn;
 
-    
       const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, signer);
       const fn = contract.interface.getFunction("submitEvidenceWithProof");
       const ins = fn.inputs.map((i) => i.type);
@@ -121,12 +119,23 @@ export default function EvidenceForm() {
         ins[4] === "uint256[2]" &&
         (ins[5] === "uint256[]" || ins[5] === "uint256[1]");
 
-    
       try {
         if (isTupleForm) {
-          await contract.submitEvidenceWithProof.staticCall(onChainHash, metadataJson, proofTuple, inputs);
+          await contract.submitEvidenceWithProof.staticCall(
+            onChainHash,
+            metadataJson,
+            proofTuple,
+            inputs
+          );
         } else if (isInlineForm) {
-          await contract.submitEvidenceWithProof.staticCall(onChainHash, metadataJson, a, b, c, inputs);
+          await contract.submitEvidenceWithProof.staticCall(
+            onChainHash,
+            metadataJson,
+            a,
+            b,
+            c,
+            inputs
+          );
         } else {
           throw new Error(`Unrecognized V1 signature: ${ins.join(", ")}`);
         }
@@ -137,31 +146,56 @@ export default function EvidenceForm() {
           const parsed = new ethers.Interface(abi).parseError(raw);
           alert(`Simulation reverted: ${parsed.name}`);
         } catch {
-          alert(simErr?.reason || simErr?.shortMessage || simErr?.message || "Simulation reverted.");
+          alert(
+            simErr?.reason ||
+              simErr?.shortMessage ||
+              simErr?.message ||
+              "Simulation reverted."
+          );
         }
         return;
       }
 
-    
       const tx = isTupleForm
-        ? await contract.submitEvidenceWithProof(onChainHash, metadataJson, proofTuple, inputs)
-        : await contract.submitEvidenceWithProof(onChainHash, metadataJson, a, b, c, inputs);
+        ? await contract.submitEvidenceWithProof(
+            onChainHash,
+            metadataJson,
+            proofTuple,
+            inputs
+          )
+        : await contract.submitEvidenceWithProof(
+            onChainHash,
+            metadataJson,
+            a,
+            b,
+            c,
+            inputs
+          );
 
       await tx.wait();
       alert("✅ Evidence submitted (file saved & URL in metadata)!");
-      setSecret(""); setMetadata(""); setProofFile(null); setEvidenceFile(null);
+      setSecret("");
+      setMetadata("");
+      setProofFile(null);
+      setEvidenceFile(null);
     } catch (err) {
       console.error("❌ Submission failed:", err);
-      alert(err?.reason || err?.shortMessage || err?.message || "Transaction failed. See console.");
+      alert(
+        err?.reason ||
+          err?.shortMessage ||
+          err?.message ||
+          "Transaction failed. See console."
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12, maxWidth: 640 }}>
-      <label style={{ fontWeight: 600 }}>ZoKrates secret (for commitment)</label>
+    <form onSubmit={handleSubmit} className="evf">
+      <label>ZoKrates secret (for commitment)</label>
       <input
+        className="ph-muted"
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
@@ -171,8 +205,9 @@ export default function EvidenceForm() {
         required
       />
 
-      <label style={{ fontWeight: 600 }}>Metadata note</label>
+      <label>Metadata note</label>
       <input
+        className="ph-muted"
         type="text"
         placeholder="Short note (stored inside on-chain metadata JSON)"
         value={metadata}
@@ -180,23 +215,15 @@ export default function EvidenceForm() {
         required
       />
 
-      <label style={{ fontWeight: 600 }}>Evidence file (saved & hashed)</label>
+      <label>Evidence file (saved & hashed)</label>
       <input type="file" onChange={handleEvidenceUpload} required />
 
-      <label style={{ fontWeight: 600 }}>ZoKrates proof.json</label>
+      <label>ZoKrates proof.json</label>
       <input type="file" accept=".json" onChange={handleProofUpload} required />
 
       <button type="submit" disabled={submitting}>
         {submitting ? "Submitting..." : "Submit with ZK Proof"}
       </button>
-
-      {downloadUrl && (
-        <div style={{ marginTop: 12 }}>
-          <a href={downloadUrl} target="_blank" rel="noreferrer">
-            Open saved file
-          </a>
-        </div>
-      )}
     </form>
   );
 }
