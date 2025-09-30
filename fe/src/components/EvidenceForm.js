@@ -75,7 +75,15 @@ export default function EvidenceForm() {
       const fileUrl = SERVER_BASE ? `${SERVER_BASE}${up.url}` : up.url;
 
       const onChainHash = up.keccak256 || localKeccak;
+
+      // Build metadata JSON and its hash
       const metadataJson = JSON.stringify({ note: metadata, fileUrl });
+      const metaHash = ethers.keccak256(ethers.toUtf8Bytes(metadataJson));
+
+      // ✅ NEW: cache human-readable metadata so the list can show the note (no contract change needed)
+      try {
+        localStorage.setItem(`metaCache:${metaHash}`, metadataJson);
+      } catch {}
 
       const proofText = await proofFile.text();
       const json = JSON.parse(proofText);
@@ -104,33 +112,37 @@ export default function EvidenceForm() {
       const ins = fn.inputs.map((i) => i.type);
 
       const isTupleForm =
-        ins.length === 4 &&
-        ins[0] === "string" &&
-        ins[1] === "string" &&
-        ins[2].startsWith("tuple") &&
-        (ins[3] === "uint256[]" || ins[3] === "uint256[1]");
+        ins.length === 5 &&
+        ins[0] === "bytes32" &&
+        ins[1] === "bytes32" &&
+        ins[2] === "string" &&
+        ins[3].startsWith("tuple") &&
+        ins[4].startsWith("uint256[");
 
       const isInlineForm =
-        ins.length === 6 &&
-        ins[0] === "string" &&
-        ins[1] === "string" &&
-        ins[2] === "uint256[2]" &&
-        ins[3] === "uint256[2][2]" &&
-        ins[4] === "uint256[2]" &&
-        (ins[5] === "uint256[]" || ins[5] === "uint256[1]");
+        ins.length === 7 &&
+        ins[0] === "bytes32" &&
+        ins[1] === "bytes32" &&
+        ins[2] === "string" &&
+        ins[3] === "uint256[2]" &&
+        ins[4] === "uint256[2][2]" &&
+        ins[5] === "uint256[2]" &&
+        ins[6].startsWith("uint256[");
 
       try {
         if (isTupleForm) {
           await contract.submitEvidenceWithProof.staticCall(
-            onChainHash,
-            metadataJson,
+            onChainHash, // bytes32 fileHash
+            metaHash,    // bytes32 metaHash
+            fileUrl,     // string fileUrl
             proofTuple,
             inputs
           );
         } else if (isInlineForm) {
           await contract.submitEvidenceWithProof.staticCall(
             onChainHash,
-            metadataJson,
+            metaHash,
+            fileUrl,
             a,
             b,
             c,
@@ -159,13 +171,15 @@ export default function EvidenceForm() {
       const tx = isTupleForm
         ? await contract.submitEvidenceWithProof(
             onChainHash,
-            metadataJson,
+            metaHash,
+            fileUrl,
             proofTuple,
             inputs
           )
         : await contract.submitEvidenceWithProof(
             onChainHash,
-            metadataJson,
+            metaHash,
+            fileUrl,
             a,
             b,
             c,

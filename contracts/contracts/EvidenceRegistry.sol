@@ -11,6 +11,7 @@ contract EvidenceRegistry is Verifier {
         string  fileUrl;
     }
 
+    // Match the FE: timestamp is arg #5 (index 4)
     event EvidenceSubmitted(
         address indexed submitter,
         bytes32 indexed fileHash,
@@ -21,7 +22,11 @@ contract EvidenceRegistry is Verifier {
 
     mapping(address => Evidence[]) public logs;
 
-    function submitEvidence(bytes32 fileHash, bytes32 metaHash, string memory fileUrl) public {
+    function submitEvidence(
+        bytes32 fileHash,
+        bytes32 metaHash,
+        string memory fileUrl
+    ) public {
         logs[msg.sender].push(Evidence(fileHash, metaHash, block.timestamp, fileUrl));
         emit EvidenceSubmitted(msg.sender, fileHash, metaHash, fileUrl, block.timestamp);
     }

@@ -240,9 +240,9 @@ export default function EvidenceVerify() {
       {status === "done" && (
         <div className="mt-6">
           {matches.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-300 p-6 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
+            <div style={{ background: 'red'}} className="rounded border border-dashed p-6 text-center">
               No on-chain record found for this value.
-            </div>
+          </div>
           ) : (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-green-700 dark:text-green-400">
