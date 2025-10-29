@@ -62,7 +62,7 @@ It provides a transparent, privacy-preserving system to record, verify, and audi
 | Frontend | React, Ethers.js, Tailwind |
 | Backend | Node.js, Express |
 | Hashing | Keccak-256 (via ethers.utils) |
-| Storage | Local / Optional IPFS |
+| Storage | Local |
 
 ---
 
