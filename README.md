@@ -225,7 +225,3 @@ fe
 **Catherina Ackerman**  
 South Africa  
 u24076491@tuks.co.za
-
-**Catherina Ackerman**  
-📍 South Africa  
-u24076491@tuks.co.za
